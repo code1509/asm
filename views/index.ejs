@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Car Management</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 10px;
+      text-align: left;
+    }
+    th {
+      background-color: #f4f4f4;
+    }
+    button {
+      margin-right: 10px;
+    }
+    form {
+      margin-top: 20px;
+    }
+    input {
+      margin: 5px 0;
+      padding: 8px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+<h1>Car Management</h1>
+
+<button onclick="fetchCars()">Load Car List</button>
+<button onclick="fetchCollections()">List Collections</button>
+
+<h2>Car List</h2>
+<table id="carTable">
+  <thead>
+  <tr>
+    <th>Car Name</th>
+    <th>Brand</th>
+    <th>Year</th>
+    <th>Price</th>
+    <th>Description</th>
+    <th>Actions</th>
+  </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<h2>Add or Update Car</h2>
+<form id="carForm" onsubmit="submitCarForm(event)">
+  <input type="hidden" id="carId" name="id">
+  <label>Car Name:</label>
+  <input type="text" id="tenXe" name="tenXe" required>
+  <label>Brand:</label>
+  <input type="text" id="hangXe" name="hangXe" required>
+  <label>Year:</label>
+  <input type="number" id="namSX" name="namSX" required>
+  <label>Price:</label>
+  <input type="number" id="gia" name="gia" required>
+  <label>Description:</label>
+  <input type="text" id="moTa" name="moTa" required>
+  <button type="submit">Submit</button>
+</form>
+
+<h2>Collections</h2>
+<ul id="collectionList"></ul>
+
+<script>
+  async function fetchCars() {
+    const response = await fetch('/getCars');
+    if (response.ok) {
+      const cars = await response.json();
+      const tableBody = document.querySelector('#carTable tbody');
+      tableBody.innerHTML = '';
+
+      cars.forEach(car => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${car.tenXe}</td>
+          <td>${car.hangXe}</td>
+          <td>${car.namSX}</td>
+          <td>${car.gia}</td>
+          <td>${car.moTa}</td>
+          <td>
+            <button onclick="editCar('${car._id}', '${car.tenXe}', '${car.hangXe}', ${car.namSX}, ${car.gia}, '${car.moTa}')">Edit</button>
+            <button onclick="deleteCar('${car._id}')">Delete</button>
+          </td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+  }
+
+  async function fetchCollections() {
+    const response = await fetch('/listCollections');
+    if (response.ok) {
+      const collections = await response.json();
+      const collectionList = document.querySelector('#collectionList');
+      collectionList.innerHTML = '';
+      collections.forEach(name => {
+        const li = document.createElement('li');
+        li.textContent = name;
+        collectionList.appendChild(li);
+      });
+    }
+  }
+
+  async function submitCarForm(event) {
+    event.preventDefault();
+
+    const carId = document.querySelector('#carId').value;
+    const carData = {
+      tenXe: document.querySelector('#tenXe').value,
+      hangXe: document.querySelector('#hangXe').value,
+      namSX: document.querySelector('#namSX').value,
+      gia: document.querySelector('#gia').value,
+      moTa: document.querySelector('#moTa').value,
+    };
+
+    const method = carId ? 'PUT' : 'POST';
+    const endpoint = carId ? `/cars/${carId}` : '/postCars';
+
+    const response = await fetch(endpoint, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(carData),
+    });
+
+    if (response.ok) {
+      fetchCars();
+      document.querySelector('#carForm').reset();
+    }
+  }
+
+  function editCar(id, tenXe, hangXe, namSX, gia, moTa) {
+    document.querySelector('#carId').value = id;
+    document.querySelector('#tenXe').value = tenXe;
+    document.querySelector('#hangXe').value = hangXe;
+    document.querySelector('#namSX').value = namSX;
+    document.querySelector('#gia').value = gia;
+    document.querySelector('#moTa').value = moTa;
+  }
+
+  async function deleteCar(id) {
+    const response = await fetch(`/cars/${id}`, { method: 'DELETE' });
+    if (response.ok) {
+      fetchCars();
+    }
+  }
+</script>
+</body>
+</html>
